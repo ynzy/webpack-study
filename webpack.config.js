@@ -1,6 +1,7 @@
 const path = require('path')
 const webpack = require('webpack')
 const htmlWebpackPlugin = require('html-webpack-plugin')
+const VueLoaderPlugin = require('vue-loader/lib/plugin');
 module.exports = {
   entry: path.join(__dirname,'./src/main.js'), //入口,表示使用webpack打包哪个文件
   output: { //输出文件相关配置
@@ -19,7 +20,8 @@ module.exports = {
     new htmlWebpackPlugin({//创建一个 在内存中 生成html 页面的插件
       template: path.join(__dirname, './src/index.html'), //指定模板页面,将来会根据指定的页面路径,去生成内存中的 页面
       filename: 'index.html' //指定生成页面的名称
-    })
+    }),
+    new VueLoaderPlugin(),  //配置vueloader插件
   ],
   module: { //配置 所有第三方模块 加载器
     rules: [ //所有第三方模块的 匹配规则
@@ -31,7 +33,13 @@ module.exports = {
       //如果小于给定的limit的值,则会转为base64格式的字符串
       { test: /\.(ttf|eot|svg|woff|woff2)$/, use:'url-loader'}, //处理字体文件 
       { test: /\.js$/, use:'babel-loader', exclude:/node_modules/ }, //处理.js文件,`exclude`排除文件
+      { test: /\.vue$/, use:'vue-loader'}, //处理.vue文件
     ]
+  },
+  resolve: {
+    alias: { //设置 vue 被导入时候包的路径
+      "vue$":'vue/dist/vue.js'
+    }
   }
 }
 
@@ -134,3 +142,16 @@ module.exports = {
       }
  */
 
+/** 
+ * webpack 中使用vue
+ * 1. 安装vue包: `yarn add vue -S`
+ * 2. 由于 在webpack中,推荐使用.vue这个组件模板文件定义组件,所以需要安装能解析这种文件的loader
+ * 3. `yarn add vue-loader vue-template-compiler -D`安装相应loader
+ * 4. 在配置文件中,新增loader配置项 `{ test: /\.vue$/, use:'vue-loader'}`
+ * 5. Vue-loader在15.*之后的版本都是 vue-loader的使用都是需要伴生 VueLoaderPlugin的.
+ * `const VueLoaderPlugin = require('vue-loader/lib/plugin')`;
+ * `new VueLoaderPlugin(),  //配置vueloader插件`;
+ * 6. 导入app组件 `import app from './app.vue'`
+ * 7. 创建 vm 的实例 var vm = new Vue({ el: '#app', render: h => h(app)})
+ * 8. 在页面中创建一个 id 为 app 的div 元素,作为我们vm实例要控制的区域
+*/
