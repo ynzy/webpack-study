@@ -2,6 +2,11 @@ const path = require('path')
 const webpack = require('webpack')
 const htmlWebpackPlugin = require('html-webpack-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
+
+function resolve (dir) {
+  return path.join(__dirname, '..', dir)
+}
+
 module.exports = {
   entry: path.join(__dirname,'./src/main.js'), //入口,表示使用webpack打包哪个文件
   output: { //输出文件相关配置
@@ -37,8 +42,11 @@ module.exports = {
     ]
   },
   resolve: {
-    alias: { //设置 vue 被导入时候包的路径
-      "vue$":'vue/dist/vue.js'
+    extensions: ['.js', '.vue', '.json'],//在导入语句没带文件后缀时，Webpack 会自动带上后缀后去尝试访问文件是否存在.
+    alias: { //配置项通过别名来把原导入路径映射成一个新的导入路径
+      "vue$":'vue/dist/vue.js', //设置 vue 被导入时候包的路径
+      '@': resolve('src'),
+      'static': path.resolve(__dirname, '../static'),
     }
   }
 }

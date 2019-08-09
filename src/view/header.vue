@@ -1,9 +1,11 @@
 <!-- 头部组件 -->
 <template>
   <div>
-    <h2>这是头部组件</h2>
+    <!-- <h2>这是头部组件</h2> -->
     <router-link to="/header/login">login</router-link>
     <router-link to="/header/register">register</router-link>
+    <router-link to="/header/communication">组件通讯</router-link>
+    
     <router-view></router-view>
   </div>
 </template>

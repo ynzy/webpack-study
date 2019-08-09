@@ -17,7 +17,8 @@
 import Vue  from "vue";
 import app from './app.vue';
 import router from './router.js'
-
+import VueBus from './vue-bus'
+Vue.use(VueBus)
 var vm = new Vue({
   el: '#app',
   router, //挂载路由对象

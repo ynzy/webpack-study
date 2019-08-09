@@ -160,7 +160,7 @@ module: { // 用来配置第三方loader模块的
 ```
 3. 可以通过`limit`指定进行base64编码的图片大小；只有小于指定字节（byte）的图片才会进行base64编码：
 ```js
-{ test: /\.(png|jpg|gif)$/, use: 'url-loader?limit=43960' },
+{ test: /\.(png|jpg|gif)$/, use: 'url-loader?limit=43960&name=[hash:8]-[name].[ext]' },
 ```
 ## 使用babel处理高级JS语法
 1. 运行`yarn add babel-core babel-loader babel-plugin-transform-runtime --save-dev`安装babel的相关loader包
@@ -178,6 +178,104 @@ module: { // 用来配置第三方loader模块的
 ```
 1. `babel-preset-env`，它包含了所有的ES相关的语法；
 
+## 关于webpack.config.js一些注意点
+#### 当我们在 控制台,直接输入 webpack 命令执行的时候,webpack 做了以下几步:
+```js
+/** 
+ * 1. 首先,`webpack`发现,我们并没有通过命令形式,给它指定入口和出口
+ * 2. webpack 就会去 项目的根目录中,查找一个叫做 `webpack.config.js` 的配置文件
+ * 3. 当找到配置文件后,webpack 会去解析执行这个配置文件,当解析执行完配置文件后,就得到了配置文件中导出的配置对象.
+ * 4. 当webpack 拿到配置对象后,就拿到了配置对象中,指定的入口和出口,然后进行打包构建.
+ * 
+*/
+```
+#### 使用 webpack-dev-server这个工具,来实现自动打包编译的功能
+```js
+/** 
+ * 1. 运行 `yarn add webpack-dev-server -D` 把这个工具安装到项目的本地开发依赖
+ * 2. 安装完毕后,这个工具的用法,和webpack命令的用法,完全一样
+ * 3. 由于,我们是在项目中,本地安装的 `webpack-dev-server`,所以,无法把它当做脚本命令,
+ * 在poweshell 终端中直接执行(只有那些安装到 全局 -g 的工具,才能在终端中正常执行)
+ * 4. 注意: webpack-dev-server 这个工具,如果想要正常运行,要求在本地项目中,必须安装webpack
+ * 5. webpack-dev-server帮我们打包生成的bundle.js 文件,并没有存放到实际的物理磁盘上;
+ * 而是,直接托管到电脑的内存中,所以,我们在项目根目录中找不到这个打包好的bundle.js
+ * 6. 我们可以认为, webpack-dev-server 把打包好的文件,以一种虚拟的形式,托管到了项目的根目录中,
+ * 虽然我们看不到它,但是,可以认为,和 dist src node_modules 平级,有一个看不见的文件.叫做 bundle.js
+*/
+```
+#### 在内存中生成html的插件`html-webpack-plugin`
+```js
+/** 
+ * 1. 导入在内存中生成页面的插件`html-webpack-plugin`
+ * 2. 在webpack.config.js中引入html-webpack-plugin
+ * 3. new htmlWebpackPlugin()创建一个生成页面的插件
+ * 作用:
+ * (1)自动在内存中根据指定页面生成一个内存的页面
+ * (2)自动把打包好的bundle.js追加到页面中去
+*/
+```
+#### 通过loader处理非js类型文件
+```js
+// webpack,默认只能默认打包处理js类型文件,无法处理 其他的 非js类型文件
+// 如果要处理非js类型的文件,我们需要手动安装一些合适的第三方loader加载器
+/**
+ * 1. 如果想要打包处理css文件,需要安装 `npm i style-loader css-loader -D`
+ * 2. 在webpack.config.js中新增一个配置节点,`module`对象,
+ * 在module对象上,有一个`rules`属性,这个属性是一个数组,这个数组中存放了所有第三方文件的匹配和处理规则
+ */
+ // 注意: webpack 处理第三方文件类型的过程:
+ /**
+  * 1. 发现这个 要处理的文件不是js文件,然后去配置文件中,查找有没有对应的第三方loader规则
+  * 2. 如果能找到对应的规则,就对调用对应的loader处理这种文件类型;
+  * 3. 在调用loader 的时候,是从后往前调用的(从右到左);
+  * 4. 当最后的一个loader调用完毕,会把处理的结果,直接交给webpack进行打包合并,最终输出到bundle.js中去
+  */
+
+  // 默认情况下,webpack 无法处理 css文件中的url地址,不管是图片还是字体库,主要是url地址都处理不了
+ /**
+  * 1. `yarn add url-loader file-loader -D`
+  * 2. 配置相应规则
+  */
+```
+#### 关于babel
+```js
+/**
+ * 在webpack中,默认只能处理一部分 ES6的新语法,一些更高级的es6语法或者es7语法,
+   webpack是处理不了的,这时候需要 借助第三方的loader, 来帮助webpack处理这些高级的语法.
+   当第三方loader 把 高级语法 转为 低级语法之后,会把结果交给webpack 去打包到 bundle.js.
+   通过 Babel,可以帮我们将 高级的语法 转换为 低级的语法
+   1. 在 webpack中,可以运行如下两套命令,安装两套包,去安装 Bable 相关的loader功能;
+      第一套包: `npm i babel-core babel-loader plugin-transform-runtime -D`
+      第二套包: `npm i babel-preset-env babel-preset-stage-0 -D`
+   2.在webpack.config.js中,module节点下的rules数组中,添加规则 
+      { test: /\.js$/, use:'babel-loader', exclude:/node_modules/ }, //处理.js文件,`exclude`排除文件
+      注意:在配置bable的loader规则的时候,必须把 node_module目录,通过 exclude选项排除掉.
+          原因: (1)如果不排除node_module,则babel会把node_module中所有的第三方js文件打包编译,会非常消耗cup,打包速度非常慢
+                (2)最终babel把所有的node_modules中的js转换完毕了,项目也无法正常运行.
+   3.在项目的根目录中,新建一个 `.babelrc` 的babel配置文件,这个配置文件,属于JSON格式,必须符合JSON语法规范
+      在 `.babelrc` 配置如下:
+      {
+        "presets": ["env","stage-0"],
+        "plugins": ["transform-runtime"]
+      }
+ */
+```
+#### webpack 中使用vue
+```js
+/** 
+ * 
+ * 1. 安装vue包: `yarn add vue -S`
+ * 2. 由于 在webpack中,推荐使用.vue这个组件模板文件定义组件,所以需要安装能解析这种文件的loader
+ * 3. `yarn add vue-loader vue-template-compiler -D`安装相应loader
+ * 4. 在配置文件中,新增loader配置项 `{ test: /\.vue$/, use:'vue-loader'}`
+ * 5. Vue-loader在15.*之后的版本都是 vue-loader的使用都是需要伴生 VueLoaderPlugin的.
+ * `const VueLoaderPlugin = require('vue-loader/lib/plugin')`;
+ * `new VueLoaderPlugin(),  //配置vueloader插件`;
+ * 6. 导入app组件 `import app from './app.vue'`
+ * 7. 创建 vm 的实例 var vm = new Vue({ el: '#app', render: h => h(app)})
+ * 8. 在页面中创建一个 id 为 app 的div 元素,作为我们vm实例要控制的区域
+*/
+```
 ## 相关文章
 [babel-preset-env：你需要的唯一Babel插件](https://segmentfault.com/p/1210000008466178)
 [Runtime transform 运行时编译es6](https://segmentfault.com/a/1190000009065987)

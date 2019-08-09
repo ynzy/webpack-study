@@ -5,6 +5,7 @@ Vue.use(VueRouter)
 import header from './view/header.vue'
 import login from './view/user/login.vue'
 import register from './view/user/register.vue'
+import communication from './view/communication'
 
 const router = new VueRouter({
   routes: [
@@ -16,6 +17,7 @@ const router = new VueRouter({
       { path: '/header', redirect: 'login' },
       { path: 'login', component: login },
       { path: 'register', component: register },
+      { path: 'communication', component: communication },
     ]
   },
 
